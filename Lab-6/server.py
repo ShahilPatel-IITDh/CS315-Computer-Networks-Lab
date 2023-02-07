@@ -1,35 +1,48 @@
 import socket
 import random
 
-# Create a string containing the server name
-server_name = "Server"
+serverName = "Server"
 
-# Start a TCP socket to accept connections from clients
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind(("localhost", 12345))
-server_socket.listen(1)
+# get local machine name
+LocalHostName = socket.gethostname()
+
+# create a socket object
+serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# bind the socket to a public host, and a port
+serverSocket.bind((LocalHostName, 12345))
+
+# become a server socket
+serverSocket.listen(1)
+
+print(f"Server waiting for incoming connections...")
 
 while True:
-    # Accept a connection from a client
-    conn, addr = server_socket.accept()
+    # establish a connection
+    clientSocket, SocketAddress = serverSocket.accept()
 
+    print(f"got a connection from {SocketAddress}")
 
-    # Receive the client message
-    client_message = conn.recv(1024).decode()
-    client_name, client_num = client_message.split()
+    # receive client data
+    clientData = clientSocket.recv(1024).decode('utf-8')
 
-    # Generate a random number between 1 and 100 and use it as server number
-    server_num = random.randint(1, 100)
+    # extract client name and number
+    client_name, client_number = clientData.split()
+    client_number = int(client_number)
 
-    # Display the client name, server name, client number, server number, and their sum
-    print("Client Name:", client_name)
-    print("Server Name:", server_name)
-    print("Client Number:", client_num)
-    print("Server Number:", server_num)
-    print("Sum:", int(client_num) + server_num)
+    # check if the number is in range
+    if client_number < 1 or client_number > 100:
+        break
 
-    # Send the server name and server number back to the client
-    conn.sendall((server_name + " " + str(server_num)).encode())
+    # generate a random number between 1 and 100
+    randNum = random.randint(1, 100)
 
-    # Close the connection
-    conn.close()
+    # send a reply to the client
+    reply = f"{serverName} {randNum}"
+    clientSocket.sendall(reply.encode('utf-8'))
+
+    # close the client socket
+    clientSocket.close()
+
+# close the server socket
+serverSocket.close()
