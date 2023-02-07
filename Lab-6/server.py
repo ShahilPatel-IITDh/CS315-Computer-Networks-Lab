@@ -10,7 +10,7 @@ LocalHostName = socket.gethostname()
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # bind the socket to a public host, and a port
-serverSocket.bind((LocalHostName, 12345))
+serverSocket.bind((LocalHostName, 3600))
 
 # become a server socket
 serverSocket.listen(1)
@@ -40,6 +40,10 @@ while True:
     # send a reply to the client
     reply = f"{serverName} {randNum}"
     clientSocket.sendall(reply.encode('utf-8'))
+
+    print(f"Client name: {client_name}")
+    print(f"Client number: {client_number}")
+    print(f"Sum: {client_number + randNum}")
 
     # close the client socket
     clientSocket.close()

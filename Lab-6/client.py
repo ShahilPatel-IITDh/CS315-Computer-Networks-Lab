@@ -1,10 +1,12 @@
 import socket
 import random
 
-clientName = "Client"
 
 # generate a random number between 1 and 100
 randomNumber = random.randint(1, 100)
+
+# Set client name
+clientName = "Client"
 
 # create a socket object
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -13,7 +15,7 @@ clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 LocalHostName = socket.gethostname()
 
 # server port
-port = 12345
+port = 3600
 
 # connection to hostname on the port.
 clientSocket.connect((LocalHostName, port))
