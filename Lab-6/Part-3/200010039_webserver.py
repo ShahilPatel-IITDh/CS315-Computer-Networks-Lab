@@ -1,3 +1,7 @@
+
+# To run: python 200010039_webserver.py
+# In browser: http://<ip_address>:3600/HelloWorld.html
+
 # Import socket module
 import socket
 
@@ -12,7 +16,7 @@ serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind(('', serverPort))
 serverSocket.listen(1)
 
-print ('The web server is up on port:', serverPort)
+print ('The web server is up on port: ', serverPort)
 #Fill in end
 
 while True:
@@ -37,22 +41,23 @@ while True:
 		#Send one HTTP header line into socket
 		#Fill in start
 		# If the file is found, send the file to the client
-		connectionSocket.send('\nHTTP/1.1 200 OK\n\n'.encode())
+		connectionSocket.send('\nHTTP/1.1 200 OK\n\n\n'.encode())
 		#Fill in end
 
 		# Send the content of the requested file to the connection socket
 		for i in range(0, len(outputdata)):
+			# send one encoded byte at a time
 			connectionSocket.send(outputdata[i].encode())
 
-
 		connectionSocket.send("\r\n".encode())
+		# Close the client connection socket	
 		connectionSocket.close()
 
 	# Error handling for file not found in server
 	except IOError:
 		# Send HTTP response message for file not found
 		#Fill in start
-		connectionSocket.send("\nHTTP/1.1 404 Not Found\n\n".encode())
+		connectionSocket.send("\nHTTP/1.1 404 Not Found\n\n\n".encode())
 		#Fill in end
 		# Close the client connection socket
                 #Fill in start
