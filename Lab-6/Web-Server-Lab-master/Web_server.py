@@ -1,16 +1,17 @@
 # Import socket module
-from socket import *
+import socket
 
 # Create a TCP server socket
 #(AF_INET is used for IPv4 protocols)
 #(SOCK_STREAM is used for TCP)
 serverPort=6789
-serverSocket = socket(AF_INET, SOCK_STREAM)
+serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 #Prepare a sever socket
 #Fill in start
 serverSocket.bind(('', serverPort))
 serverSocket.listen(1)
+
 print ('the web server is up on port:', serverPort)
 #Fill in end
 
@@ -20,7 +21,8 @@ while True:
 	print ('Ready to serve...')
 
 	# Set up a new connection from the client
-	connectionSocket, addr =serverSocket.accept() #Fill in start   #Fill in end
+	 # Return a new socket representing the connection, and the address of the client. The socket is usable like a regular socket object, e.g. you can call its send() and recv() methods. The address is a pair (hostaddr, port) for IPv4, where hostaddr is a string representing the IPv4 address and port is an integer.
+	connectionSocket, addr = serverSocket.accept() #Fill in start   #Fill in end
 
 	try:
 
@@ -28,9 +30,9 @@ while True:
 
 		filename = message.split()[1]
 		
-		f = open(filename[1:])
+		inputFile = open(filename[1:])
 
-		outputdata =f.read() #Fill in start #Fill in end
+		outputdata =inputFile.read() #Fill in start #Fill in end
 		print (outputdata)
 		#Send one HTTP header line into socket
 		#Fill in start#
@@ -40,9 +42,12 @@ while True:
 		# Send the content of the requested file to the connection socket
 		for i in range(0, len(outputdata)):
 			connectionSocket.send(outputdata[i].encode())
+
+
 		connectionSocket.send("\r\n".encode())
 		connectionSocket.close()
 
+	# Error handling for file not found in server
 	except IOError:
 		# Send HTTP response message for file not found
 		#Fill in start
