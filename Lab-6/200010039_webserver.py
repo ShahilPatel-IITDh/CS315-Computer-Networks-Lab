@@ -18,7 +18,6 @@ while True:
    print ('Ready to serve...')
 
    # Return a new socket representing the connection, and the address of the client. The socket is usable like a regular socket object, e.g. you can call its send() and recv() methods. The address is a pair (hostaddr, port) for IPv4, where hostaddr is a string representing the IPv4 address and port is an integer.
-
    connectionSocket, address = serverSocket.accept()
 
    try:
@@ -40,6 +39,7 @@ while True:
 
       for i in range(0, len(outputdata)):
          connectionSocket.send(outputdata[i])
+         
       connectionSocket.close()
    except IOError:
 
