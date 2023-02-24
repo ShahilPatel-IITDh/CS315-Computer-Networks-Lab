@@ -1,7 +1,6 @@
 import socket
 import random
 
-
 # generate a random number between 1 and 100
 randomNumber = random.randint(1, 100)
 
