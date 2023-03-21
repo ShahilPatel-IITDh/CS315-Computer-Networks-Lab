@@ -19,16 +19,16 @@ with serverSocket as SS:
 
     print(f'Server listening on {HOST}:{PORT}...')
 
-    def handle_client(conn, addr):
+    def handleClient(connection, address):
         """
         Handles a client connection.
         """
 
-        print(f'Connected by {addr}')
+        print(f'Connected by {address}')
 
         # Receive the client's name
-        name = conn.recv(1024).decode()
-        activeClients.append((name, conn))
+        name = connection.recv(1024).decode()
+        activeClients.append((name, connection))
 
         # Broadcast the list of active clients to all clients
         for client_name, client_conn in activeClients:
@@ -36,17 +36,17 @@ with serverSocket as SS:
 
         # Keep receiving messages from the client
         while True:
-            data = conn.recv(1024).decode()
+            data = connection.recv(1024).decode()
             if not data:
                 break
 
             # Broadcast the message to all clients
             for client_name, client_conn in activeClients:
-                if client_conn != conn:
+                if client_conn != connection:
                     client_conn.sendall(f'{name}: {data}'.encode())
 
         # Remove the client from the list of active clients
-        activeClients.remove((name, conn))
+        activeClients.remove((name, connection))
 
         # Broadcast the updated list of active clients to all clients
         for client_name, client_conn in activeClients:
@@ -56,6 +56,7 @@ with serverSocket as SS:
 
     # Accept incoming connections
     while True:
-        conn, addr =SS.accept()
+        # Accept a new connection, which contains a new socket object conn and the address of the client
+        connection, address = SS.accept()
         # Start a new thread to handle the client
-        threading.Thread(target=handle_client, args=(conn, addr)).start()
+        threading.Thread(target=handleClient, args=(connection, address)).start()
