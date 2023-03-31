@@ -31,8 +31,8 @@ with serverSocket as SS:
         activeClients.append((name, connection))
 
         # Broadcast the list of active clients to all clients
-        for client_name, client_conn in activeClients:
-            client_conn.sendall(f'{name} has joined. Active clients: {", ".join([n for n, _ in activeClients])}'.encode())
+        for clientName, clientConnection in activeClients:
+            clientConnection.sendall(f'{name} has joined. Active clients: {", ".join([n for n, _ in activeClients])}'.encode())
 
         # Keep receiving messages from the client
         while True:
@@ -41,16 +41,16 @@ with serverSocket as SS:
                 break
 
             # Broadcast the message to all clients
-            for client_name, client_conn in activeClients:
-                if client_conn != connection:
-                    client_conn.sendall(f'{name}: {data}'.encode())
+            for clientName, clientConnection in activeClients:
+                if clientConnection != connection:
+                    clientConnection.sendall(f'{name}: {data}'.encode())
 
         # Remove the client from the list of active clients
         activeClients.remove((name, connection))
 
         # Broadcast the updated list of active clients to all clients
-        for client_name, client_conn in activeClients:
-            client_conn.sendall(f'{name} has left. Active clients: {", ".join([n for n, _ in activeClients])}'.encode())
+        for clientName, clientConnection in activeClients:
+            clientConnection.sendall(f'{name} has left. Active clients: {", ".join([n for n, _ in activeClients])}'.encode())
 
         print(f'Client {name} disconnected.')
 
