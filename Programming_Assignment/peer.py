@@ -2,7 +2,7 @@ import socket
 import threading
 
 HOST = '127.0.0.1'
-PORT = 50000
+PORT = 65345
 
 class Peer:
 	def __init__(self, host, port):
@@ -17,11 +17,11 @@ class Peer:
 				raise Exception('Manager disconnected!')
 			
 			if data == b'PING':
-				print('[INFO] Pong!')
+				print('Pong!')
 				self.socket.sendall(b'PONG')
 				continue
 			
-			print('[INFO] Received peer update!')
+			print('Received peer update!')
 			self.peers = [(p.split(",")[0], p.split(",")[1]) for p in data.decode().split(';')]
 
 	def run(self):
@@ -32,14 +32,15 @@ class Peer:
 		except KeyboardInterrupt:
 			self.socket.sendall(b'CLOSE')
 			self.socket.close()
-			print('[NOTICE] Shutting down...')
+			print('Shutting down...')
 			exit(0)
 
-		except Exception as e:
+		except Exception as exp:
 			self.socket.sendall(b'CLOSE')
 			self.socket.close()
-			print(f'[ERROR] {e}')
+			print(f'[ERROR] {exp}')
 			raise
 
 if __name__ == '__main__':
+	name = input('Enter peer name: ')
 	Peer(HOST, PORT).run()

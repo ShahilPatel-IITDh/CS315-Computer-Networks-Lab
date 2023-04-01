@@ -3,7 +3,7 @@ import threading
 import time
 
 HOST = '127.0.0.1'
-PORT = 50000
+PORT = 65345
 
 class Manager:
 	class Peer:
@@ -37,7 +37,9 @@ class Manager:
 
 		self.broadcastActivePeers()
 
-	def unregisterPeer(self, peer):
+	def removePeer(self, peer):
+
+		# Remove peer from active peers, lock the connection and close it
 		self.lock.acquire()
 		print(f'[INFO] Peer disconnected: {peer.addr}')
 		self.active_peers.remove(peer)
@@ -52,14 +54,14 @@ class Manager:
 				data = peer.conn.recv(1024)
 
 				if not data or data == b'CLOSE':
-					self.unregisterPeer(peer)
+					self.removePeer(peer)
 					break
 			except socket.timeout:
 				print(f'[INFO] Pinging {peer.addr}')
 				peer.conn.sendall(b'PING')
 				data = peer.conn.recv(1024)
 				if not data == b'PONG':
-					self.unregisterPeer(peer)
+					self.removePeer(peer)
 					break
 					
 
