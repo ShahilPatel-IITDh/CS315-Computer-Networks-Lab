@@ -1,86 +1,103 @@
+# Write a code in python using socket programming such that the code enables client-to-client file transfer application, comprising multiple clients and a server, the server should be always ON which maintains the list of currently active peers across the network at all times. A newly arrived peer connects to the manager. The manager adds this newly arrived peer to its list of active peers and broadcasts the updated list. The manager periodically checks the availability of active peers from its list, updates the same, if some peers leaves the network and broadcast the updated list. The peer informs the manager when it leaves the network, the manager deletes this peer from the list of active peers and broadcasts the updated list. 
+# A new peer is expected to know the manager's IP and port. It pings the manager and saves the list of active peers sent by the manager. It also maintains a list of shareable files, Before going offline, a peer informs the manager, To fetching a file from other peer(s), a peer: a) broadcasts its requirement to all peers (from its list of active peers) b)based on received responses, parallely fetches different fragments of the required file from available peers c) if any of transmitting peers go offline, the requesting peer fetches its missing fragments from the remaining available peers (v) On being requested to share a file by another peer, a peer: a)informs the requesting peer of its availabilityb) transmits the requested fragment(s)1 of one of its shareable files 
+
 import socket
 import threading
-import time
 
-HOST = '127.0.0.1'
-PORT = 65345
+# define the manager IP and port
+MANAGER_IP = '127.0.0.1'
+MANAGER_PORT = 8000
 
-class Manager:
-	class Peer:
-		def __init__(self, conn, addr):
-			self.conn = conn
-			self.addr = addr
+# define the maximum message length
+MAX_MESSAGE_LENGTH = 4096
 
-	def __init__(self, host, port, timeout=10):
-		# Setup socket
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.socket.bind((host, port))
+# define the list of active peers
+active_peers = []
 
-		self.timeout = timeout
-		self.lock = threading.Lock()
-		self.activeClients = []
+# function to send a message to a specific socket
+def send_message(socket, message):
+    socket.sendall(message.encode())
 
-	def removePeer(self, peer):
+# function to broadcast a message to all active peers
+def broadcast_message(message):
+    for peer in active_peers:
+        send_message(peer['socket'], message)
 
-		# Remove peer from active peers, lock the connection and close it
-		self.lock.acquire()
-		print(f'[INFO] Peer disconnected: {peer.addr}')
-		self.activeClients.remove(peer)
-		self.lock.release()
-		peer.conn.close()
+# function to handle a new client connection
+def handle_client_connection(client_socket, client_address):
+    try:
+        # receive the client's shared files list
+        shared_files_message = client_socket.recv(MAX_MESSAGE_LENGTH).decode()
+        shared_files = shared_files_message.split(',')
 
-		self.broadcastActivePeers()
+        # add the client to the list of active peers
+        active_peers.append({
+            'socket': client_socket,
+            'address': client_address,
+            'shared_files': shared_files
+        })
 
-	def handlePeer(self, peer):
-		while True:
-			try:
-				data = peer.conn.recv(1024)
+        # broadcast the updated list of active peers
+        broadcast_message(f"Active peers: {[peer['address'] for peer in active_peers]}")
 
-				if not data or data == b'CLOSE':
-					self.removePeer(peer)
-					break
-			except socket.timeout:
-				print(f'[INFO] Pinging {peer.addr}')
-				peer.conn.sendall(b'PING')
-				data = peer.conn.recv(1024)
-				if not data == b'PONG':
-					self.removePeer(peer)
-					break
+        # continuously receive messages from the client
+        while True:
+            message = client_socket.recv(MAX_MESSAGE_LENGTH).decode()
 
-	def run(self):
-		print('[NOTICE] Manager started!')
+            # handle client leaving the network
+            if message == "LEAVE":
+                active_peers.remove({
+                    'socket': client_socket,
+                    'address': client_address,
+                    'shared_files': shared_files
+                })
+                # broadcast the updated list of active peers
+                broadcast_message(f"Active peers: {[peer['address'] for peer in active_peers]}")
+                break
 
-		try:
-			while True:
-				self.socket.listen()
-				connection, address = self.socket.accept()
-				connection.settimeout(10)
-				self.lock.acquire()
-				self.activeClients.append(peer)
-				print(f'[INFO] New peer connected: {address}')
-				self.lock.release()
-				self.lock.acquire()
-				for peer in self.activeClients:
-					l = ';'.join([f"{p.addr[0]},{p.addr[1]}" for p in self.activeClients])
-					connection.sendall(l.encode())
-				self.lock.release()
-				threading.Thread(target=self.handlePeer, args=(self.activeClients[-1],), daemon=True).start()
-				
-		except KeyboardInterrupt:
-			print('[NOTICE] Shutting down...')
-			self.socket.close()
-			for peer in self.activeClients.copy():
-				peer.conn.close()
-				self.activeClients.remove(peer)
-			exit(0)
-		except Exception as e:
-			self.socket.close()
-			for peer in self.activeClients.copy():
-				peer.conn.close()
-				self.activeClients.remove(peer)
-			print(f'[ERROR] {e}')
-			raise
+    except ConnectionResetError:
+        pass
+
+    finally:
+        # handle client leaving the network
+        active_peers.remove({
+            'socket': client_socket,
+            'address': client_address,
+            'shared_files': shared_files
+        })
+        # broadcast the updated list of active peers
+        broadcast_message(f"Active peers: {[peer['address'] for peer in active_peers]}")
+        client_socket.close()
+
+# function to handle the manager's incoming connections
+def handle_manager_connections(manager_socket):
+    while True:
+        client_socket, client_address = manager_socket.accept()
+        client_thread = threading.Thread(target=handle_client_connection, args=(client_socket, client_address))
+        client_thread.start()
+
+# function to check the availability of active peers
+def check_active_peers():
+    while True:
+        for peer in active_peers:
+            try:
+                send_message(peer['socket'], "PING")
+                peer['socket'].recv(MAX_MESSAGE_LENGTH)
+            except ConnectionResetError:
+                active_peers.remove(peer)
+        # broadcast
+        broadcast_message(f"Active peers: {[peer['address'] for peer in active_peers]}")
 
 if __name__ == '__main__':
-	Manager(HOST, PORT).run()
+    # create a manager socket and bind it to the manager IP and port
+    manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    manager_socket.bind((MANAGER_IP, MANAGER_PORT))
+    manager_socket.listen()
+
+    # create a thread to handle incoming connections from peers
+    manager_thread = threading.Thread(target=handle_manager_connections, args=(manager_socket,))
+    manager_thread.start()
+
+    # create a thread to check the availability of active peers
+    check_thread = threading.Thread(target=check_active_peers)
+    check_thread.start()
