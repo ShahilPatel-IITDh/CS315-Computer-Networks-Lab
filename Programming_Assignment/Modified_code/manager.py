@@ -70,7 +70,7 @@ class Manager:
 				self.socket.listen()
 				conn, addr = self.socket.accept()
 
-				self.registerPeer(self.Peer(conn, addr, name))
+				self.registerPeer(self.Peer(conn, addr))
 
 				threading.Thread(target=self.handlePeer, args=(self.active_peers[-1],), daemon=True).start()
 
