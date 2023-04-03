@@ -5,6 +5,9 @@ import threading
 MANAGER_IP = '127.0.0.1'
 MANAGER_PORT = 8000
 
+# define the list of active peers
+active_peers = []
+
 # define the maximum message length
 MAX_MESSAGE_LENGTH = 4096
 
@@ -97,5 +100,5 @@ if __name__ == '__main__':
     # send the shared files list to the manager
     shared_files_message = ','.join(shared_files)
     send_message(manager_socket, shared_files_message)
-    
+
    
