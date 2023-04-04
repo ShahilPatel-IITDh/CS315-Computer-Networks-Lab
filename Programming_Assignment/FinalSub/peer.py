@@ -116,8 +116,8 @@ class Peer:
         print("[NOTICE] File transfer complete: {file}").format(file=file_name)
 
     def testingCodeFlow(self):
-        print("Testing")        
-        return work()
+        print("Testing")   
+        print(f"Peers {self.activePeers}")
     
 if __name__ == "__main__":
     peer = Peer("127.0.0.1", 5000, ["file1.txt"])
